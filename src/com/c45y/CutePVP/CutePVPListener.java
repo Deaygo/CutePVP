@@ -173,9 +173,6 @@ public class CutePVPListener implements Listener {
 		if (flagOf != null)
 			flagOf.dropFlagAtLocation(event.getEntity().getLocation().getBlock().getLocation());
 
-		if (event.getEntity().getKiller() instanceof Player)
-			player.addKill();
-
 		ByteArrayOutputStream bo = new ByteArrayOutputStream();
 		DataOutputStream out = new DataOutputStream(bo);
 		try {
@@ -187,6 +184,20 @@ public class CutePVPListener implements Listener {
 
 		for (NetworkServer server : ServerMessengerPlugin.getInstance().getServers())
 			server.sendPluginMessage(CutePVP.getInstance(), "CutePVP", bo.toByteArray());
+		
+		if (event.getEntity().getKiller() instanceof org.bukkit.entity.Player) {
+			bo = new ByteArrayOutputStream();
+			out = new DataOutputStream(bo);
+			try {
+				out.writeUTF("PLAYER");
+				out.writeUTF("KILL");
+				out.writeUTF(player.getName());
+			} catch (IOException e) { e.printStackTrace(); }
+
+			for (NetworkServer server : ServerMessengerPlugin.getInstance().getServers())
+				server.sendPluginMessage(CutePVP.getInstance(), "CutePVP", bo.toByteArray());
+			player.addKill();
+		}
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -235,13 +246,12 @@ public class CutePVPListener implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-		if (!(event.getEntity() instanceof Player)) {
+		if (!(event.getEntity() instanceof org.bukkit.entity.Player)) {
 			return;
 		}
-		if ((event.getDamager() instanceof Player)) {
-			Player attacker = (Player) event.getDamager();
-			Player player = (Player) event.getEntity();
-
+		if ((event.getDamager() instanceof org.bukkit.entity.Player)) {
+			Player attacker = CutePVP.getInstance().getPlayer((org.bukkit.entity.Player)event.getDamager());
+			Player player = CutePVP.getInstance().getPlayer((org.bukkit.entity.Player)event.getEntity());
 			Team attackerTeam = CutePVP.getInstance().getTeamManager().getTeamForPlayer(attacker.getName());
 			if (attackerTeam.inTeam(player.getName()) || player.hasPermission("cutepvp.modmode")) {
 				event.setCancelled(true);
@@ -252,9 +262,9 @@ public class CutePVPListener implements Listener {
 		}
 		else if (event.getDamager() instanceof Arrow) {
 			Arrow arrow = (Arrow) event.getDamager();
-			if (arrow.getShooter() instanceof Player) {
-				Player player = (Player) event.getEntity();
-				Player shooter = (Player) arrow.getShooter();
+			if (arrow.getShooter() instanceof org.bukkit.entity.Player) {
+				Player player = CutePVP.getInstance().getPlayer((org.bukkit.entity.Player)event.getEntity());
+				Player shooter = CutePVP.getInstance().getPlayer((org.bukkit.entity.Player)arrow.getShooter());
 
 				Team attackerTeam = CutePVP.getInstance().getTeamManager().getTeamForPlayer(shooter.getName());
 				if (attackerTeam.inTeam(player.getName()) || player.hasPermission("cutepvp.modmode")) {
@@ -329,7 +339,7 @@ public class CutePVPListener implements Listener {
 		if (team_block == null || team_attacking == null || !team_block.isFlagAtLocation(block.getLocation()))
 			return;
 
-		if (team_carrying != null && team_attacking.isTeamBlock(block)) {
+		if (team_carrying != null && team_attacking.isTeamBlock(block) && team_block.isFlagAtLocation(team_block.getFlagHomeLocation())) {
 			player.addScore();
 			team_attacking.addScore();
 
@@ -418,6 +428,12 @@ public class CutePVPListener implements Listener {
 
 		if (CutePVP.getInstance().getTeamManager().inOwnTeamBase(player))
 			return;
+		
+		if (CutePVP.getInstance().getTeamManager().inRangeOfEnemyTeamSpawn(player)) {
+			event.getPlayer().sendMessage(ChatColor.DARK_RED + "You cannot build in an enemy base");
+			event.setCancelled(true);
+			return;
+		}
 
 		Block block = event.getBlock();
 
@@ -491,11 +507,6 @@ public class CutePVPListener implements Listener {
 
 			
 			return;
-		}
-
-		if (CutePVP.getInstance().getTeamManager().inRangeOfEnemyTeamSpawn(player)) {
-			event.getPlayer().sendMessage(ChatColor.DARK_RED + "You cannot build in an enemy base");
-			event.setCancelled(true);
 		}
 	}
 

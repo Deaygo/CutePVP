@@ -210,7 +210,7 @@ public class TeamManager {
 
 	public Team getTeamFromFlagLocation(Location loc) {
 		for (Team team : teams.values())
-			if (team.getFlagLocation().equals(loc) && team.getFlagNetworkLocation().getServer() == null)
+			if (team.getFlagLocation() != null && team.getFlagLocation().equals(loc) && team.getFlagNetworkLocation().getServer() == null)
 				return team;
 
 		return null;

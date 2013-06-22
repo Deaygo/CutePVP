@@ -76,6 +76,8 @@ public class ServerMessageListener implements PluginMessageListener {
 				else if (event.equals("CAPTURE")) {
 					Bukkit.getServer().broadcastMessage(player.getDisplayName() + " captured the " + flag_team_name + " flag");
 					team.removeCarrier();
+					player.addScore();
+					team.addScore();
 				}
 				else if (event.equals("RETURN")) {
 					Bukkit.getServer().broadcastMessage(player.getDisplayName() + " returned the " + flag_team_name + " flag");
@@ -98,6 +100,11 @@ public class ServerMessageListener implements PluginMessageListener {
 				else if (event.equals("DEATH")) {
 					String message = in.readUTF();
 					Bukkit.getServer().broadcastMessage(player.getDisplayName() + " " + message);
+				}
+				else if (event.equals("KILL")) {
+					CutePVP.getInstance().getLogger().info("Got a message about a kill for " + player.getName());
+					player.addKill();
+					player.getTeam().addKill();
 				}
 				else if (event.equals("PORTAL")) {
 //					Bukkit.getServer().broadcastMessage(player.getDisplayName() + " portaling");

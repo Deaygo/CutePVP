@@ -296,6 +296,11 @@ public class CutePVP extends JavaPlugin {
 				runBuff();
 				return true;
 			}
+			else if (args.length == 1 && new String("forcerespawnflags").equals(args[0])) {
+				sender.sendMessage("[CutePVP] Respawning flags");
+				forceRespawnFlags();
+				return true;
+			}
 			else if (args.length == 1 && new String("respawnflags").equals(args[0])) {
 				sender.sendMessage("[CutePVP] Respawning flags");
 				respawnFlags();
@@ -432,6 +437,13 @@ public class CutePVP extends JavaPlugin {
 		}
 
 //		getLogger().info("End running buff");
+	}
+	
+	public void forceRespawnFlags() {
+		for (Team team : team_manager.getTeams().values()) {
+			team.setCarrier(null);
+			team.respawnFlag();
+		}
 	}
 
 	public void respawnFlags() {
